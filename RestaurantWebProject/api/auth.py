@@ -65,6 +65,10 @@ class Register(APIView):
     def post(self, request):
         username = (request.data.get('username') or '').strip()
         password = request.data.get('password') or ''
+        role = (request.data.get('role') or '').strip().lower()
+
+        # allowed roles
+        allowed_roles = {'customer', 'restaurant', 'driver'}
 
         if not username or not password:
             return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -80,8 +84,13 @@ class Register(APIView):
             hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
             hashed_str = hashed.decode('utf-8')
 
-            # default role is 'customer' (must match DB CHECK constraint)
-            cur.execute("INSERT INTO users (username, password, role) VALUES (?,?,?)", (username, hashed_str, 'customer'))
+            # determine role (default to 'customer') and validate
+            if not role:
+                role = 'customer'
+            if role not in allowed_roles:
+                return Response({"error": "invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+
+            cur.execute("INSERT INTO users (username, password, role) VALUES (?,?,?)", (username, hashed_str, role))
             db.commit()
             return Response({"status": "created"}, status=status.HTTP_201_CREATED)
         finally:
