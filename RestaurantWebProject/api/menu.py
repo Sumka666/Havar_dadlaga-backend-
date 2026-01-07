@@ -1,28 +1,23 @@
+from api.db import get_db
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api.db import restaurant_db
-from common.jwt import decode_token
+from rest_framework import status
+from common.permissions import JWTAuthentication
+
 
 class Menu(APIView):
+    authentication_classes = [JWTAuthentication]
 
     def get(self, request):
-        db = restaurant_db()
+        # require authentication
+        if not getattr(request, 'user', None):
+            return Response({'error': 'authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        db = get_db()
         cur = db.cursor()
         cur.execute("SELECT id,name,price FROM menu")
-        return Response(cur.fetchall())
+        rows = cur.fetchall()
 
-    def post(self, request):
-        token = request.headers['Authorization'].split()[1]
-        role = decode_token(token)['role']
-
-        if role != 'staff':
-            return Response({"error": "forbidden"}, status=403)
-
-        db = restaurant_db()
-        cur = db.cursor()
-        cur.execute(
-            "INSERT INTO menu (name,price) VALUES (?,?)",
-            (request.data['name'], request.data['price'])
-        )
-        db.commit()
-        return Response({"message": "menu added"})
+        # Convert sqlite row tuples into dicts for clearer API responses
+        result = [{'id': r[0], 'name': r[1], 'price': r[2]} for r in rows]
+        return Response(result)

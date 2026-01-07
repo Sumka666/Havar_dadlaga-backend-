@@ -1,11 +1,14 @@
 import sqlite3
 from pathlib import Path
-from django.conf import settings
 
-BASE = Path(settings.BASE_DIR)
+BASE_DIR = Path(__file__).resolve().parent
+
+def get_db():
+    return sqlite3.connect(BASE_DIR / 'db_api.sqlite3')
 
 def auth_db():
-    return sqlite3.connect(BASE / 'db' / 'auth.db')
+    """Compatibility alias used by views that import `auth_db`.
 
-def restaurant_db():
-    return sqlite3.connect(BASE / 'db' / 'restaurant.db')
+    Returns a sqlite3 connection to the API database.
+    """
+    return get_db()
