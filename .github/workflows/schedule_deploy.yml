@@ -1,0 +1,13 @@
+name: Scheduled Deploy
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy
+        # The -sS flags make curl quiet but still show errors if it fails
+        run: curl -sS "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
