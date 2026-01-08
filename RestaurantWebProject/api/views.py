@@ -21,7 +21,7 @@ def login_view(request):
 
 
 def _authenticate_credentials(email, password):
-    """Authenticate by email/password. Returns (user, tokens) or a Response on error."""
+    
     if not email or not password:
         return Response({'detail': 'Имэйл болон нууц үг шаардлагатай'}, status=status.HTTP_400_BAD_REQUEST)
     try:
@@ -54,22 +54,13 @@ def _authenticate_credentials(email, password):
 
 @api_view(['POST'])
 def login_user_view(request):
-    """Login endpoint only for users with role 'user'. Missing role treated as user for compatibility."""
     email = request.data.get('email')
     password = request.data.get('password')
     auth_result = _authenticate_credentials(email, password)
     if isinstance(auth_result, Response):
         return auth_result
     user, tokens = auth_result
-    # enforce role == 'user' if role exists
-    if hasattr(user, 'role'):
-        try:
-            user_role = str(user.role).lower()
-        except Exception:
-            user_role = ''
-        if user_role != 'user':
-            return Response({'detail': 'Хандах зөвшөөрөлгүй: зөвхөн хэрэглэгч нэвтэрч болно'}, status=status.HTTP_403_FORBIDDEN)
-    return Response({'success': True, 'message': 'Амжилттай нэвтэрлээ', 'tokens': tokens, 'user': {'userID': user.userID, 'userName': user.userName, 'email': user.email, 'role': getattr(user, 'role', None)}})
+    return Response({'success': True, 'message': 'Амжилттай нэвтэрлээ', 'tokens': tokens, 'user': {'userID': user.userID, 'userName': user.userName, 'email': user.email}})
 
 
 @api_view(['POST'])
@@ -81,12 +72,4 @@ def login_driver_view(request):
     if isinstance(auth_result, Response):
         return auth_result
     user, tokens = auth_result
-    if not hasattr(user, 'role'):
-        return Response({'detail': 'Хэрэглэгчийн загвар дээр `role` талбар байхгүй тул жолоочийг шалгах боломжгүй'}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        user_role = str(user.role).lower()
-    except Exception:
-        user_role = ''
-    if user_role != 'driver':
-        return Response({'detail': 'Хандах зөвшөөрөлгүй: зөвхөн жолооч нэвтрэх боломжтой'}, status=status.HTTP_403_FORBIDDEN)
-    return Response({'success': True, 'message': 'Амжилттай нэвтэрлээ', 'tokens': tokens, 'user': {'userID': user.userID, 'userName': user.userName, 'email': user.email, 'role': getattr(user, 'role', None)}})
+    return Response({'success': True, 'message': 'Амжилттай нэвтэрлээ', 'tokens': tokens, 'user': {'userID': user.userID, 'userName': user.userName, 'email': user.email}})
