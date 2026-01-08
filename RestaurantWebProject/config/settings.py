@@ -44,12 +44,7 @@ INSTALLED_APPS = [
     'admin_panel',
     'restaurant_web',
 
-    # Allauth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.facebook',
+   
 ]
 
 SITE_ID = 1
