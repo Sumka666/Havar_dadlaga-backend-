@@ -1,8 +1,8 @@
-Django>=4.0
-djangorestframework
-PyJWT
-bcrypt
 Django>=4.2
+djangorestframework
+djangorestframework-simplejwt
 gunicorn
 whitenoise
 psycopg2-binary
+dj-database-url
+bcrypt
