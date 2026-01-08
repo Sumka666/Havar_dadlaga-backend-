@@ -7,6 +7,18 @@ class User(models.Model):
     phone = models.IntegerField()
     password = models.CharField(max_length=255)
 
+    @property
+    def id(self):
+        return self.userID
+
+    @id.setter
+    def id(self, value):
+        self.userID = value
+
+    @property
+    def pk(self):
+        return self.userID
+
     class Meta:
         db_table = 'tbl_user'
 
