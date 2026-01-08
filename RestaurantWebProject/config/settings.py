@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -83,6 +84,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 #     }
 # }
 
+<<<<<<< HEAD
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -94,6 +96,11 @@ DATABASES = {
 DATABASE_ROUTERS = [
     'common.db_router.AppDatabaseRouter',
 ]
+=======
+# DATABASE_ROUTERS = [
+#     'common.db_router.AppDatabaseRouter',
+# ]
+>>>>>>> 980a67756d13702139ddaaae17bf7d474cd0b94d
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
