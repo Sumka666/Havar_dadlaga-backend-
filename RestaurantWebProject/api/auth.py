@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from api.db import auth_db
+from api.models import User
 from common.jwt import create_token
 import bcrypt
 
@@ -9,7 +9,8 @@ import bcrypt
 class Login(APIView):
     """Login view that returns a JWT when credentials are valid.
 
-    Expects JSON body with `username` and `password`.
+    Uses the Django `User` model from `api.models` and returns a token
+    including the user's `role` (e.g., `customer` or `driver`).
     """
 
     def post(self, request):
@@ -19,47 +20,33 @@ class Login(APIView):
         if not username or not password:
             return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        db = auth_db()
-        cur = db.cursor()
-        try:
-            cur.execute(
-                "SELECT id, role, password FROM users WHERE username=?",
-                (username,)
-            )
-            row = cur.fetchone()
+        user = User.objects.filter(username=username).first()
+        if not user:
+            return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            if not row:
-                return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        stored_password = user.password or ''
 
-            user_id, role, stored_password = row[0], row[1], row[2]
-
-            # stored_password may be bcrypt-hashed or plaintext (legacy).
-            ok = False
-            if isinstance(stored_password, str) and stored_password.startswith('$2'):
-                try:
-                    ok = bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
-                except Exception:
-                    ok = False
-            else:
-                # legacy plaintext fallback
-                ok = (password == stored_password)
-
-            if not ok:
-                return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-            token = create_token(user_id, role)
-            return Response({"token": token})
-        finally:
+        ok = False
+        if isinstance(stored_password, str) and stored_password.startswith('$2'):
             try:
-                db.close()
+                ok = bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
             except Exception:
-                pass
+                ok = False
+        else:
+            ok = (password == stored_password)
+
+        if not ok:
+            return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = create_token(user.id, user.role)
+        return Response({"token": token})
 
 
 class Register(APIView):
     """Register a new user and store a bcrypt-hashed password.
 
-    Expects JSON body with `username` and `password`. Returns 201 on success.
+    Validates `role` (defaults to `customer`) and uses the Django ORM to
+    create the `User` model instance.
     """
 
     def post(self, request):
@@ -67,34 +54,20 @@ class Register(APIView):
         password = request.data.get('password') or ''
         role = (request.data.get('role') or '').strip().lower()
 
-        # allowed roles
-        allowed_roles = {'customer',  'driver'}
+        allowed_roles = {'customer', 'driver'}
 
         if not username or not password:
             return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        db = auth_db()
-        cur = db.cursor()
-        try:
-            # ensure username is unique
-            cur.execute("SELECT id FROM users WHERE username=?", (username,))
-            if cur.fetchone():
-                return Response({"error": "username exists"}, status=status.HTTP_400_BAD_REQUEST)
+        if not role:
+            role = 'customer'
+        if role not in allowed_roles:
+            return Response({"error": "invalid role"}, status=status.HTTP_400_BAD_REQUEST)
 
-            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            hashed_str = hashed.decode('utf-8')
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "username exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # determine role (default to 'customer') and validate
-            if not role:
-                role = 'customer'
-            if role not in allowed_roles:
-                return Response({"error": "invalid role"}, status=status.HTTP_400_BAD_REQUEST)
+        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-            cur.execute("INSERT INTO users (username, password, role) VALUES (?,?,?)", (username, hashed_str, role))
-            db.commit()
-            return Response({"status": "created"}, status=status.HTTP_201_CREATED)
-        finally:
-            try:
-                db.close()
-            except Exception:
-                pass
+        user = User.objects.create(username=username, password=hashed, role=role)
+        return Response({"status": "created", "id": user.id}, status=status.HTTP_201_CREATED)
