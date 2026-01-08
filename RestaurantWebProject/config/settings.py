@@ -50,18 +50,20 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
 
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
     'api',
     'admin_panel',
     'restaurant_web',
-
-   
 ]
 
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # default
-    'allauth.account.auth_backends.AuthenticationBackend',  # allauth
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 LOGIN_REDIRECT_URL = '/'  # Login хийсний дараа хаашаа явуулах
