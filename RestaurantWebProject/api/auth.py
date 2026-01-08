@@ -68,7 +68,7 @@ class Register(APIView):
         role = (request.data.get('role') or '').strip().lower()
 
         # allowed roles
-        allowed_roles = {'customer', 'restaurant', 'driver'}
+        allowed_roles = {'customer',  'driver'}
 
         if not username or not password:
             return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
