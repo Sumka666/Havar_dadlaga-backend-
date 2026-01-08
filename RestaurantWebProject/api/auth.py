@@ -7,62 +7,38 @@ from common.passwords import hash_password, verify_password
 
 
 class Login(APIView):
-    """Login view that returns a JWT when credentials are valid.
-
-    Uses the Django `User` model from `api.models` and returns a token
-    including the user's `role` (e.g., `customer` or `driver`).
-    """
 
     def post(self, request):
         username = (request.data.get('username') or '').strip()
         password = request.data.get('password') or ''
 
         if not username or not password:
-            return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "username болон password шаардлагатай"}, status=status.HTTP_400_BAD_REQUEST)
 
-        user = User.objects.filter(username=username).first()
+        user = User.objects.filter(userName=username).first()
         if not user:
-            return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"error": "Хэрэглэгч олдсонгүй"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        stored_password = user.password or ''
-        ok = verify_password(password, stored_password)
+        if not verify_password(password, user.password):
+            return Response({"error": "Нууц үг буруу"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if not ok:
-            return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+        # Role distinction
+        if user.role == "driver":
+            role_text = "Жолооч"
+        elif user.role == "customer":
+            role_text = "Хэрэглэгч"
+        else:
+            role_text = user.role
 
         token = create_token(user.id, user.role)
-        return Response({"token": token})
+        return Response({
+            "token": token,
+            "role": user.role,
+            "role_text": role_text,
+            "user_id": user.id,
+            "username": user.userName
+        })
 
 
-
-class Register(APIView):
-    """Register a new user and store a bcrypt-hashed password.
-
-    Validates `role` (defaults to `customer`) and uses the Django ORM to
-    create the `User` model instance.
-    """
-
-    def post(self, request):
-        username = (request.data.get('username') or '').strip()
-        password = request.data.get('password') or ''
-        role = (request.data.get('role') or '').strip().lower()
-
-        allowed_roles = {'customer', 'driver'}
-
-        if not username or not password:
-            return Response({"error": "username and password required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not role:
-            role = 'customer'
-        if role not in allowed_roles:
-            return Response({"error": "invalid role"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if User.objects.filter(username=username).exists():
-            return Response({"error": "username exists"}, status=status.HTTP_400_BAD_REQUEST)
-
-        hashed = hash_password(password)
-
-        user = User.objects.create(username=username, password=hashed, role=role)
-        return Response({"status": "created", "id": user.id}, status=status.HTTP_201_CREATED)
 
 
