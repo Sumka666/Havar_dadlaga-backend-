@@ -25,6 +25,7 @@ SECRET_KEY = 'django-insecure-+dmlvofx^nn8=dd8xtei#imq2e@f=f^wc-y+s4i8hv2=ez^62@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# ALLOWED_HOSTS = ['.onrender.com']
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -36,12 +37,30 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
 
     'api',
     'admin_panel',
     'restaurant_web',
+
+    # Allauth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.facebook',
 ]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # default
+    'allauth.account.auth_backends.AuthenticationBackend',  # allauth
+)
+
+LOGIN_REDIRECT_URL = '/'  # Login хийсний дараа хаашаа явуулах
+LOGOUT_REDIRECT_URL = '/' # Logout хийсний дараа хаашаа явуулах
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -51,7 +70,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    #  Add this for allauth
+    'allauth.account.middleware.AccountMiddleware',
 ]
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -95,6 +118,18 @@ DATABASES = {
         conn_max_age=600,
     )
 }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_default.sqlite3',
+    },
+
+  
+}
+DATABASE_ROUTERS = [
+    'common.db_router.AppDatabaseRouter',
+]
 
 # DATABASE_ROUTERS = [
 #     'common.db_router.AppDatabaseRouter',

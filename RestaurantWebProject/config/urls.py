@@ -24,4 +24,5 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('admin-panel/', include('admin_panel.urls')),
     path('restaurant/', include('restaurant_web.urls')),
+    path('accounts/', include('allauth.urls')),  # Social login URLs
 ]
