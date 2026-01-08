@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from api.models import User
 from common.jwt import create_token
-import bcrypt
+from common.passwords import hash_password, verify_password
 
 
 class Login(APIView):
@@ -25,21 +25,14 @@ class Login(APIView):
             return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         stored_password = user.password or ''
-
-        ok = False
-        if isinstance(stored_password, str) and stored_password.startswith('$2'):
-            try:
-                ok = bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
-            except Exception:
-                ok = False
-        else:
-            ok = (password == stored_password)
+        ok = verify_password(password, stored_password)
 
         if not ok:
             return Response({"error": "invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
         token = create_token(user.id, user.role)
         return Response({"token": token})
+
 
 
 class Register(APIView):
@@ -67,7 +60,9 @@ class Register(APIView):
         if User.objects.filter(username=username).exists():
             return Response({"error": "username exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-        hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        hashed = hash_password(password)
 
         user = User.objects.create(username=username, password=hashed, role=role)
         return Response({"status": "created", "id": user.id}, status=status.HTTP_201_CREATED)
+
+
