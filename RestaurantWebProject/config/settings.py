@@ -119,17 +119,17 @@ DATABASES = {
     )
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db_default.sqlite3',
-    },
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db_default.sqlite3',
+#     },
 
   
-}
-DATABASE_ROUTERS = [
-    'common.db_router.AppDatabaseRouter',
-]
+# }
+# DATABASE_ROUTERS = [
+#     'common.db_router.AppDatabaseRouter',
+# ]
 
 # DATABASE_ROUTERS = [
 #     'common.db_router.AppDatabaseRouter',
