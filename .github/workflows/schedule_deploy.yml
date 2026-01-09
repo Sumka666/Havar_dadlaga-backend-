@@ -1,13 +1,21 @@
-name: Scheduled Deploy
+name: Delayed Render Deploy
+
 on:
-  schedule:
-    - cron: '*/30 * * * *'
-  workflow_dispatch: 
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    concurrency:
+      group: render-deploy-main
+      cancel-in-progress: true
+
     steps:
+      - name: Wait 30 minutes after last commit
+        run: sleep 600
+
       - name: Trigger Render Deploy
-        # The -sS flags make curl quiet but still show errors if it fails
         run: curl -sS "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
